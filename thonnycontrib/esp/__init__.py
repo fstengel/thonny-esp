@@ -7,6 +7,10 @@ from thonny.ui_utils import SubprocessDialog
 from thonny.running import get_frontend_python
 from time import sleep
 
+from tkinter import ttk
+
+from thonny.ui_utils import create_string_var
+
 class ESPProxy(MicroPythonProxy):
     def _finalize_repl(self):
         # In some cases there may be still something coming.
@@ -96,7 +100,23 @@ class ESP8266ConfigPage(MicroPythonConfigPage):
     pass
 
 class ESP32ConfigPage(MicroPythonConfigPage):
-    pass
+    def __init__(self, master):
+        super().__init__(master)
+        label = ttk.Label(self, text="Path prefix:")
+        label.grid(row=2, column=0, sticky="new")
+        prefix = get_workbench().get_option(self.backend_name + ".path_prefix")
+        if prefix is None:
+            prefix = ""
+        self._esp32_pathPrefixVar = create_string_var(prefix)
+        self._esp32_pathPrefixEntry = ttk.Entry(self, textvariable=self._esp32_pathPrefixVar)
+        self._esp32_pathPrefixEntry.grid(row=3, column=0, sticky="new")
+    
+    def apply(self):
+        super().apply()
+        if self._esp32_pathPrefixVar.modified:  # pylint: disable=no-member
+            get_workbench().set_option(self.backend_name + ".path_prefix", self._esp32_pathPrefixVar.get())
+            
+    
 
 def load_plugin():
     add_micropython_backend("ESP8266", ESP8266Proxy, "MicroPython on ESP8266", ESP8266ConfigPage)
